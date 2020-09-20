@@ -11,3 +11,405 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
 fi
 
 # Customize to your needs...
+#
+# ==========================================================================
+#                                   Variables
+# ==========================================================================
+
+# ZSH History settings
+# (source: https://www.soberkoder.com/better-zsh-history)
+# (source: https://brooklyntriplecrown.com/fr/zsh/40126-how-to-see-old-history-in-zsh-zsh.html
+#export HISTFILESIZE=1000000000
+#export HISTSIZE=1000000000
+#export HISTFILE=~/.zsh_history
+
+#setopt HIST_FIND_NO_DUPS
+# following should be turned off, if sharing history via setopt SHARE_HISTORY
+#setopt INC_APPEND_HISTORY
+
+export HISTCONTROL=ignorespace 
+# Do not store commands starting by a space in the history
+# (source: https://stackoverflow.com/questions/8473121/execute-command-without-keeping-it-in-history)
+
+
+setopt no_beep # dont beep on error
+
+export LC_ALL=en_US.UTF-8 
+export   LANG=en_US.UTF-8
+
+export EDITOR=vim
+export VISUAL=vim
+
+export GPG_TTY=`tty`
+
+# VAGRANT: Force Vagrant to use Vmware Fusion
+export VAGRANT_DEFAULT_PROVIDER=virtualbox
+#export VAGRANT_DEFAULT_PROVIDER=vmware_fusion
+
+# WINGIDE: WingIDE author for snippets
+export AUTHOR='kerouanton'
+export AUTHOR_EMAIL='@kerouanton'
+export WINGHOME='/Applications/WingIDE.app/Contents/Resources'
+export LIBDIRS=${WINGHOME}/bin/runtime-python2.7/lib:${WINGHOME}/bin/runtime-qt5.5/lib:${WINGHOME}/bin/runtime-sip-py2.7/lib:${WINGHOME}/bin/runtime-pyqt5.5-py2.7/lib:${WINGHOME}/bin/runtime-scintillaedit-qt5/lib
+export DYLD_LIBRARY_PATH=${LIBDIRS}
+export DYLD_FRAMEWORK_PATH=${LIBDIRS}
+
+# ZPREZTO: Do not display Python Virtualenv in PS1
+# (Taken care by zprezto:prompt:sorin)
+export VIRTUAL_ENV_DISABLE_PROMPT=True
+
+# PYTHON
+export PYTHONPATH='/usr/local/bin/python3'
+
+# GoLang
+export GOPATH=$HOME/src/go
+export GOROOT=`go env GOROOT`
+PATH=$PATH:$GOPATH/bin
+
+# ==========================================================================
+#                                   Functions
+# ==========================================================================
+
+
+# mkcd command: Create a directory, then cd to it
+function mkcd ()
+{
+  mkdir -p "$1" && cd -P "$1"
+}
+
+
+# ZSH: Autoactivate virtualenv when changing directory
+# ('chpwd' is a zsh hook function to 'cd').
+function chpwd() {
+  if [[ -z "$VIRTUAL_ENV" ]] ; then
+    ## If activate script folder is found then activate the virtualenv
+      if [[ -f ./bin/activate ]] ; then
+        source ./bin/activate
+      fi
+  else
+    ## check the current folder belong to earlier VIRTUAL_ENV folder
+    # if yes then do nothing else deactivate
+      if [[ "$PWD"/ != "$VIRTUAL_ENV"/* ]] ; then
+        deactivate
+      fi
+  fi
+}
+
+# ==========================================================================
+#                                   Plugins
+# ==========================================================================
+
+
+## DEBUG MODE BEGIN {
+#zmodload zsh/zprof
+
+if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
+  source ~/.zprezto/init.zsh
+fi
+
+# We don't use zplug, so we load manually using source.
+source ~/.zprezto-contrib/fast-syntax-highlighting/*.plugin.zsh
+source ~/.zprezto-contrib/zsh-autosuggestions/*.plugin.zsh
+source ~/.zprezto-contrib/zsh-command-time/*.plugin.zsh
+source ~/.zprezto-contrib/history-search-multi-word/*.plugin.zsh
+
+#zprof
+## } DEBUG MODE END
+
+
+
+
+# ==========================================================================
+#                                   Options
+# ==========================================================================
+
+#zstyle :plugin:history-search-multi-word reset-prompt-protect 1
+
+###zsh-command-time plugin customisation
+ZSH_COMMAND_TIME_MIN_SECONDS=3
+ZSH_COMMAND_TIME_MSG="Execution time: %s"
+ZSH_COMMAND_TIME_COLOR="cyan"
+zsh_command_time() {
+    if [ -n "$ZSH_COMMAND_TIME" ]; then
+        hours=$(($ZSH_COMMAND_TIME/3600))
+        min=$(($ZSH_COMMAND_TIME/60))
+        sec=$(($ZSH_COMMAND_TIME%60))
+        if [ "$ZSH_COMMAND_TIME" -le 60 ]; then
+            timer_show="$fg[green]$ZSH_COMMAND_TIME s."
+        elif [ "$ZSH_COMMAND_TIME" -gt 60 ] && [ "$ZSH_COMMAND_TIME" -le 180 ]; then
+            timer_show="$fg[yellow]$min min. $sec s."
+        else
+            if [ "$hours" -gt 0 ]; then
+                min=$(($min%60))
+                timer_show="$fg[red]$hours h. $min min. $sec s."
+            else
+                timer_show="$fg[red]$min min. $sec s."
+            fi
+        fi
+        printf "${ZSH_COMMAND_TIME_MSG}\n" "$timer_show"
+    fi
+}
+
+# ==========================================================================
+#                                   Aliases
+# ==========================================================================
+
+# Ansible-playbook shortcut (BKBK15sept2020)
+alias ap='ansible-playbook'
+
+# vimp: vim plain, with no plugins configured (useful for remote)
+alias vimp='vim -u NONE'
+
+# disable interactive shell on mc to gain speed
+alias mc='mc -u'
+
+# Alternative to ls
+alias ls='exa'
+#alias tree='exa --tree'
+
+# Enable aliases to be sudo’ed
+alias sudo='/usr/bin/sudo '
+
+# Get week number
+alias week='date +%V'
+
+# Draw a laybyrinth a la C64
+alias laby="perl -C -e 'print chr(9585.5+rand) while 1'"
+
+# Get macOS Software Updates, and update installed Homebrew, npm,
+# and their installed packages
+alias update='\
+    #echo "==>UPGRADING OSX";\
+    #sudo softwareupdate -i -a;\
+    echo "==>UPGRADING BREW";\
+    brew update; brew upgrade; brew cask upgrade; brew cleanup;\
+    echo "==>UPGRADING ZSH";\
+    zplug update ;\
+    echo "==>UPGRADING JAVASCRIPT";\
+    npm install npm -g; npm update -g;\
+    echo "==>UPGRADING RUBY";\
+    sudo gem update --system; sudo gem update; sudo gem cleanup;\
+    echo "==>DONE!";'
+
+# IP addresses
+alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias localip="ipconfig getifaddr en0"
+alias ips="ifconfig -a | grep -o 'inet6\? \(addr:\)\?\s\?\(\(\([0-9]\+\.\)\{3\}[0-9]\+\)\|[a-fA-F0-9:]\+\)' | awk '{ sub(/inet6? (addr:)? ?/, \"\"); print }'"
+alias localnet='nmap -sP 192.168.8.0/24|grep report|cut -d " " -f 5-6'
+
+# Show active network interfaces
+alias ifactive="ifconfig | pcregrep -M -o '^[^\t:]+:([^\n]|\n\t)*status: active'"
+
+# Flush Directory Service cache
+alias flush="dscacheutil -flushcache && killall -HUP mDNSResponder"
+
+# Recursively delete `.DS_Store` files
+alias cleanup="find . -type f -name '*.DS_Store' -ls -delete"
+
+# Empty the Trash on all mounted volumes and the main HDD.
+# Also, clear Apple’s System Logs to improve shell startup speed.
+# Finally, clear download history from quarantine. https://mths.be/bum
+alias emptytrash="sudo rm -rfv /Volumes/*/.Trashes; sudo rm -rfv ~/.Trash; sudo rm -rfv /private/var/log/asl/*.asl; sqlite3 ~/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV* 'delete from LSQuarantineEvent'"
+
+# Show/hide hidden files in Finder
+alias show="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
+alias hide="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
+
+# Hide/show all desktop icons (useful when presenting)
+alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder"
+alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder"
+
+# URL-encode strings
+alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1]);"'
+
+# Stuff I never really use but cannot delete either because of http://xkcd.com/530/
+alias soundoff="osascript -e 'set volume output muted true'"
+alias soundon="osascript -e 'set volume output volume 100'"
+
+# Print each PATH entry on a separate line
+#alias path='echo -e ${PATH//:/\\n}'
+
+# Docker autonuke (book docker in practice p.95)
+#alias dockernuke='docker ps -a -q | xargs docker rm -f'
+
+# BKBK Gandi Genpw$
+#alias gp="cd ~/dvpt/py/bk/genpw ; vim pw.py ; ./pw.py ; cd -"
+#alias gp='wing ~/src/py/_wing-projects/bk-genpwd.wpr'
+
+
+# BKBK Kubectl to k
+alias k=kubectl
+
+# BKBK check Google connectivity
+#alias p8='ping -c 4 1.1.1.1'
+
+## BKBK fipradio
+#alias fip="mpv \"https://chai5she.cdn.dvmr.fr/fip-midfi.mp3?ID=radiofrance\""
+alias fip="mpv ~/Music/bk.m3u"
+
+alias gll='git lol'
+alias firefox="open /Applications/Firefox52ESR.app/Contents/MacOS/firefox --args -ProfileManager"
+
+
+# BKBK LazyDocker
+alias lzd='docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.config/lazydocker:/.config/jesseduffield/lazydocker lazyteam/lazydocker'
+
+# CLI IMPROVED
+# From https://remysharp.com/2018/08/23/cli-improved
+#$ \cat # ignore aliases named "cat" - explanation: https://stackoverflow.com/a/16506263/22617
+#$ command cat # ignore functions and aliases
+
+
+# MacOS wifi range scan
+alias wifiscan=" /S*/*/P*/*/*/*/*/airport -s | open -ef"
+
+# Commands on Steroids
+alias less=bat
+alias ping='prettyping --nolegend'
+alias top="sudo htop" # alias top and fix high sierra bug
+alias du="ncdu --color dark -rr -x --exclude .git --exclude node_modules"
+alias preview="fzf --preview 'bat --color \"always\" {}'"
+# add support for ctrl+o to open selected file in VS Code
+export FZF_DEFAULT_OPTS="--bind='ctrl-o:execute(code {})+abort'"
+
+
+function bk() {
+ echo "
+    # (source: ~/.zshrc)
+    # [A]lias [B]rew [F]unction [M]acOS
+    # - bat                   [B] Cat on steroids
+    # - bcomp                 [B] Beyond Compare
+    # - column                [M] Pretty display on columns \`mount | column -t\`
+    # - entr                  [B] Watch files
+    # - fd                    [B] Find on steroids
+    # - figlet                [B] Ascii Art
+    # - fortune               [B] Random quotes at login (.zlogin)
+    # - fzf                   [B] Fuzzy Finder
+    # - ghi -- Gandi/gandi.cli Git Open Tickets
+    # - git-lfs               [B] large file versioning for git
+    # - hexyl                 [B] Hex viewer
+    # - htop                  [B] Top on steroids
+    # - irssi                 [B] IRC (/join #gandi)
+    # - latex
+    # - lnav                  [B] Advanced Log Navigator
+    # - mdp                   [B] Slides display for Markdown
+    # - ncdu                  [B] Du on steroids
+    # - onefetch              [B] Git status page
+    # - pandoc                [B] Universal document converter (md epub pdf etc)
+    # - paste                 [M] \`ls | paste - - -\` (displays on 3 columns)
+    # - ponysay               [B] Cowsay
+    # - prettyping            [B] Ping on steroids
+    # - rg -i                 [B] Grep in Directories
+    # - sa                    [A] Search alias
+    # - sipcalc               [B] Subnet Netmask calculator
+    # - termshark -i en0          Wireshark on terminal
+    # - the-silver-searcher       Grep on steroids (command: ag)
+    # - watchman              [B] Watch files and take action on files
+    # - youtube-dl            [B] Download youtube videos
+    #
+    # Calibre => ebook viewer (open all files with)
+    "
+ }
+    # (UNINSTALLED)
+    # - diff-so-fancy         [B] Diff on steroids
+    # - gunits                [B] Unit conversions
+    # - byobu                 [B] Frontend for screen/tmux
+    # - mupdf                 [B] Lightweight PDF ePub viewer (mupdf-gl)
+    # - wine                  [B] windows emulation
+    # - mand                  [B] Man with Dash
+    # - fasd                  [B] Find etc.
+    # - noti                  [B] OSX notification
+    # - tldr                  [B] Man on steroids
+    # - mupdf                 [B] Lightweight PDF ePub viewer
+    # - cmus                  [B] CLI music player
+    #    :tqueue 10         add 10 random songs in queue
+    #    <c>                start playing
+    #    <b>                next song
+    #    :q!                quit
+
+##Start vim when running txt files
+#alias -s txt=vim
+
+
+# Canonical hex dump; some systems have this symlinked
+command -v hd > /dev/null || alias hd="hexdump -C"
+
+# macOS has no `md5sum`, so use `md5` as a fallback
+command -v md5sum > /dev/null || alias md5sum="md5"
+
+# macOS has no `sha1sum`, so use `shasum` as a fallback
+command -v sha1sum > /dev/null || alias sha1sum="shasum"
+
+
+
+
+
+# =============================================================================
+#                                Key Bindings
+# =============================================================================
+
+
+# =============================================================================
+#                                 Completions
+# =============================================================================
+
+# Setting fpath for completion
+fpath=(~/.zsh/completion $fpath)
+autoload -Uz compinit && compinit -i
+
+# =============================================================================
+#                                   Startup
+# =============================================================================
+
+# Load SSH and GPG agents via keychain.
+#setup_agents() {
+#  [[ $UID -eq 0 ]] && return
+#
+#  if (( $+commands[keychain] )); then
+#	local -a ssh_keys gpg_keys
+#	for i in ~/.ssh/**/*pub; do test -f "$i(.N:r)" && ssh_keys+=("$i(.N:r)"); done
+#	gpg_keys=$(gpg -K --with-colons 2>/dev/null | awk -F : '$1 == "sec" { print $5 }')
+#    if (( $#ssh_keys > 0 )) || (( $#gpg_keys > 0 )); then
+#	  alias run_agents='() { $(whence -p keychain) --quiet --eval --inherit any-once --agents ssh,gpg $ssh_keys ${(f)gpg_keys} }'
+#	  #[[ -t ${fd:-0} || -p /dev/stdin ]] && eval `run_agents`
+#	  unalias run_agents
+#    fi
+#  fi
+#}
+
+#setup_agents
+#unfunction setup_agents
+
+# Source defined functions.
+[[ -f ~/.zsh_functions ]] && source ~/.zsh_functions
+
+# Source local customizations.
+[[ -f ~/.zsh_rclocal ]] && source ~/.zsh_rclocal
+
+# Source exports and aliases.
+[[ -f ~/.zsh_exports ]] && source ~/.zsh_exports
+[[ -f ~/.zsh_aliases ]] && source ~/.zsh_aliases
+
+# vim: ft=zsh
+
+#BKBK iTerm2 Shell Integration
+# (from https://www.iterm2.com/documentation-shell-integration.html)
+#test -e "~/.iterm2_shell_integration.zsh" \
+#    && source "~/.iterm2_shell_integration.zsh"
+
+
+#curl -L https://iterm2.com/shell_integration/zsh \
+#-o ~/.iterm2_shell_integration.zsh
+#source ~/.iterm2_shell_integration.zsh
+
+
+#eval "$(direnv hook zsh)"
+
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# >>>> Vagrant command completion (start)
+fpath=(/opt/vagrant/embedded/gems/2.2.10/gems/vagrant-2.2.10/contrib/zsh $fpath)
+compinit
+# <<<<  Vagrant command completion (end)
+alias dotfiles='/usr/bin/git --git-dir=/Users/bruno/.dotfiles/ --work-tree=/Users/bruno'
